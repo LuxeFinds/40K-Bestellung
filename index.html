@@ -50,6 +50,12 @@
         button:hover {
             background: #ffd700;
         }
+        label {
+            display: block;
+            text-align: left;
+            margin-top: 10px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -60,6 +66,7 @@
         <form id="orderForm">
             <input type="text" id="name" placeholder="Dein Name" required>
             <input type="number" id="price" placeholder="Betrag in €" required>
+            <label for="date">📅 Wähle ein Datum:</label>
             <input type="date" id="date" required>
             <button type="submit">Bestellen</button>
         </form>
