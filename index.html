@@ -67,8 +67,7 @@
     
     <script>
         let userIP = null;
-        let bestellteIPs = JSON.parse(localStorage.getItem("bestellteIPs")) || [];
-        
+
         // Aktuelles Datum holen und anzeigen
         const today = new Date();
         const formattedDate = today.toLocaleDateString("de-DE");
@@ -94,11 +93,6 @@
 
             if (!userIP) {
                 alert("⚠️ IP-Adresse konnte nicht geladen werden. Versuche es erneut.");
-                return;
-            }
-
-            if (bestellteIPs.includes(userIP)) {
-                alert("❌ Du hast bereits eine Bestellung aufgegeben!");
                 return;
             }
 
@@ -138,8 +132,6 @@
                 body: JSON.stringify(payload)
             }).then(() => {
                 alert("✅ Bestellung erfolgreich gesendet!");
-                bestellteIPs.push(userIP);
-                localStorage.setItem("bestellteIPs", JSON.stringify(bestellteIPs));
             }).catch(() => {
                 alert("❌ Fehler beim Senden der Bestellung.");
             });
