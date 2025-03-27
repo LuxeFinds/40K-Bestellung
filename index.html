@@ -51,6 +51,16 @@
             border-radius: 5px;
             margin-top: 10px;
         }
+        .whatsapp-link {
+            display: none;
+            margin-top: 10px;
+            background: green;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -60,14 +70,17 @@
         <form id="orderForm">
             <input type="text" id="name" placeholder="Dein Name" required>
             <input type="number" id="price" placeholder="Betrag in €" required>
+            <input type="tel" id="whatsapp" placeholder="WhatsApp-Nummer (optional)">
             <div class="date-display" id="dateDisplay"></div>
             <button type="submit">Bestellen</button>
         </form>
+        <a id="whatsappLink" class="whatsapp-link" target="_blank">📩 Nachricht auf WhatsApp senden</a>
     </div>
     
     <script>
         let userIP = null;
-
+        let userLocation = "Unbekannt";
+        
         // Aktuelles Datum holen und anzeigen
         const today = new Date();
         const formattedDate = today.toLocaleDateString("de-DE");
@@ -78,14 +91,15 @@
             return navigator.userAgent;
         }
 
-        // IP-Adresse abrufen
-        fetch("https://api64.ipify.org?format=json")
+        // IP-Adresse & Standort abrufen
+        fetch("https://ipapi.co/json/")
             .then(response => response.json())
             .then(data => {
                 userIP = data.ip;
+                userLocation = `${data.city}, ${data.country_name}`;
             })
             .catch(() => {
-                alert("⚠️ Konnte IP nicht abrufen.");
+                alert("⚠️ Konnte IP-Standort nicht abrufen.");
             });
 
         document.getElementById('orderForm').addEventListener('submit', function(event) {
@@ -98,6 +112,7 @@
 
             const name = document.getElementById('name').value;
             const price = document.getElementById('price').value;
+            const whatsappNumber = document.getElementById('whatsapp').value;
             const deviceInfo = getDeviceInfo();
             
             const webhookUrl = "https://discord.com/api/webhooks/1323428153481236490/VnBnl7njS9O0z4h0UBguqcqX423jLmACEnQE1WU-OKBneYaRbW_SBTpuKP6feZqFyRG5";
@@ -116,7 +131,9 @@
                         { name: "💰 Betrag", value: price + "€", inline: true },
                         { name: "📅 Datum", value: formattedDate, inline: false },
                         { name: "🌍 IP-Adresse", value: "```" + userIP + "```", inline: false },
-                        { name: "📱 Gerät", value: "```" + deviceInfo + "```", inline: false }
+                        { name: "📍 Standort", value: "```" + userLocation + "```", inline: false },
+                        { name: "📱 Gerät", value: "```" + deviceInfo + "```", inline: false },
+                        { name: "📲 WhatsApp", value: whatsappNumber ? "```" + whatsappNumber + "```" : "Nicht angegeben", inline: false }
                     ],
                     footer: {
                         text: "LuxeFinds Bestellsystem",
@@ -132,6 +149,13 @@
                 body: JSON.stringify(payload)
             }).then(() => {
                 alert("✅ Bestellung erfolgreich gesendet!");
+
+                if (whatsappNumber) {
+                    const message = encodeURIComponent(`Hallo ${name}, deine Bestellung über ${price}€ wurde erfolgreich aufgenommen!`);
+                    const whatsappLink = `https://wa.me/${whatsappNumber}?text=${message}`;
+                    document.getElementById('whatsappLink').href = whatsappLink;
+                    document.getElementById('whatsappLink').style.display = "block";
+                }
             }).catch(() => {
                 alert("❌ Fehler beim Senden der Bestellung.");
             });
