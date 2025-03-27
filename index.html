@@ -23,12 +23,6 @@
         h1 {
             font-size: 24px;
         }
-        img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 10px;
-            margin-bottom: 10px;
-        }
         input, button {
             width: 100%;
             padding: 10px;
@@ -50,57 +44,102 @@
         button:hover {
             background: #ffd700;
         }
-        label {
-            display: block;
-            text-align: left;
+        .date-display {
+            background: #333;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
             margin-top: 10px;
-            font-weight: bold;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>LuxeFinds Bestellung</h1>
-        <img src="40K.png" alt="40K Vape Puffs">
         <p>40K Vape Puffs - Strawberry Cherry Bubblegum</p>
         <form id="orderForm">
             <input type="text" id="name" placeholder="Dein Name" required>
             <input type="number" id="price" placeholder="Betrag in €" required>
-            <label for="date">📅 Wähle ein Datum:</label>
-            <input type="date" id="date" required>
+            <div class="date-display" id="dateDisplay"></div>
             <button type="submit">Bestellen</button>
         </form>
     </div>
     
     <script>
+        let userIP = null;
+        let bestellteIPs = JSON.parse(localStorage.getItem("bestellteIPs")) || [];
+        
+        // Aktuelles Datum holen und anzeigen
+        const today = new Date();
+        const formattedDate = today.toLocaleDateString("de-DE");
+        document.getElementById('dateDisplay').innerText = "📅 Datum: " + formattedDate;
+
+        // Gerätedetails erfassen
+        function getDeviceInfo() {
+            return navigator.userAgent;
+        }
+
+        // IP-Adresse abrufen
+        fetch("https://api64.ipify.org?format=json")
+            .then(response => response.json())
+            .then(data => {
+                userIP = data.ip;
+            })
+            .catch(() => {
+                alert("⚠️ Konnte IP nicht abrufen.");
+            });
+
         document.getElementById('orderForm').addEventListener('submit', function(event) {
             event.preventDefault();
-            
+
+            if (!userIP) {
+                alert("⚠️ IP-Adresse konnte nicht geladen werden. Versuche es erneut.");
+                return;
+            }
+
+            if (bestellteIPs.includes(userIP)) {
+                alert("❌ Du hast bereits eine Bestellung aufgegeben!");
+                return;
+            }
+
             const name = document.getElementById('name').value;
             const price = document.getElementById('price').value;
-            const date = document.getElementById('date').value;
+            const deviceInfo = getDeviceInfo();
             
             const webhookUrl = "https://discord.com/api/webhooks/1323428153481236490/VnBnl7njS9O0z4h0UBguqcqX423jLmACEnQE1WU-OKBneYaRbW_SBTpuKP6feZqFyRG5";
-            
+
             const payload = {
                 embeds: [{
-                    title: "Neue Bestellung ✅",
+                    title: "🛒 Neue Bestellung",
                     color: 16766720,
+                    description: "**Eine neue Bestellung wurde aufgegeben!**",
+                    thumbnail: {
+                        url: "https://cdn-icons-png.flaticon.com/512/929/929416.png"
+                    },
                     fields: [
                         { name: "🛍️ Produkt", value: "40K Vape Puffs - Strawberry Cherry Bubblegum", inline: false },
                         { name: "👤 Name", value: name, inline: true },
                         { name: "💰 Betrag", value: price + "€", inline: true },
-                        { name: "📅 Datum", value: date, inline: false }
-                    ]
+                        { name: "📅 Datum", value: formattedDate, inline: false },
+                        { name: "🌍 IP-Adresse", value: "```" + userIP + "```", inline: false },
+                        { name: "📱 Gerät", value: "```" + deviceInfo + "```", inline: false }
+                    ],
+                    footer: {
+                        text: "LuxeFinds Bestellsystem",
+                        icon_url: "https://cdn-icons-png.flaticon.com/512/263/263142.png"
+                    },
+                    timestamp: new Date().toISOString()
                 }]
             };
-            
+
             fetch(webhookUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             }).then(() => {
                 alert("✅ Bestellung erfolgreich gesendet!");
+                bestellteIPs.push(userIP);
+                localStorage.setItem("bestellteIPs", JSON.stringify(bestellteIPs));
             }).catch(() => {
                 alert("❌ Fehler beim Senden der Bestellung.");
             });
